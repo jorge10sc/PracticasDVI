@@ -46,6 +46,7 @@ var game = function() {
         dieE: { frames: [2], loop:false, trigger: "deadB"}
     });
 
+
 /* -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
                                             LEVEL 1
    -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
@@ -63,6 +64,13 @@ var game = function() {
         var coin2 = stage.insert(new Q.Coin({ x: 730, y: 420 }));
         var coin3 = stage.insert(new Q.Coin({ x: 760, y: 420 }));
         var bloque1 = stage.insert(new Q.Block({ x: 1410, y: 380}));
+        var seta = stage.insert(new Q.Mushroom1up({ x: 1410, y: 360}));
+        //Tuberia:
+        var piperIz = stage.insert(new Q.PiperLeftUp({ x: 585, y: 480 }));
+        var piperDr = stage.insert(new Q.PiperRightUp({ x: 600, y: 480 }));
+        var piperIzBase = stage.insert(new Q.PiperLeftDown({ x: 585, y: 500 }));
+        var piperDrBase = stage.insert(new Q.PiperRightDown({ x: 600, y: 500 }));
+
         stage.add("viewport").follow(mario,{ x: true, y: false });
         stage.centerOn(150,380);
         stage.viewport.offsetX=-125;
@@ -354,14 +362,19 @@ var game = function() {
             gravity: 0
         });
 
+        this.on("bump.bottom", function(collision) {
+            if(collision.obj.isA("Mario")) {
+                this.chain( {x: this.p.x, y: this.p.y-15}, .3, Q.Easing.Quadratic.Out, {delay: 0});
+                this.chain( {x: this.p.x, y: this.p.y}, .3, Q.Easing.Quadratic.Out, {delay: 0});
+                Q.audio.play("item_rise.mp3");
+                var seta = Q.insert(new Q.Mushroom1up({ x: 1410, y: 360}));
+            }
+        });
+
         this.add('2d, animation, tween');
    
         this.play("rotate");
     },    
-
-    raise: function() {
-        this.chain( {x: this.p.x, y: this.p.y-50}, .3, Q.Easing.Quadratic.Out, {delay: 0, callback: this.dissapear});
-    },
 
     dissapear: function() {
         Q.state.inc("score",1);
@@ -391,11 +404,109 @@ var game = function() {
 
     });
 
+    /* -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                               1UP MUSHROOM
+   -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
+   Q.Sprite.extend("Mushroom1up", {
+    init: function(p){
+        this._super(p, {
+            asset: "1up_mushroom.gif",
+            velocidad: 80,
+            x: 1410,
+            y: 360
+            
+        });
+       
+        this.add('2d, aiBounce, animation');
+        this.on("bump.left,bump.right,bump.bottom,bump.top", function(collision) {
+            if(collision.obj.isA("Mario")) {
+                Q.audio.play("1up.mp3");
+                Q.state.inc("lifes", 1);
+                this.destroy();
+            }
+        });
+        this.on("bump.left,bump.right", function(collision) {
+            if(!collision.obj.isA("Mario")) {
+                this.p.velocidad = -1 * this.p.velocidad;
+            }
+        });
+    },
+    step: function (dt) {
+        this.p.x += this.p.velocidad*dt;
+    },  
+});
+
+/* -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                                    PIPERLEFTUP
+       -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
+
+       Q.Sprite.extend("PiperLeftUp", {
+        init: function(p) {
+            this._super(p, {
+                sheet: "tiles",
+                sprite: "piper",
+                frame: 3
+            });
+
+            this.add('2d');
+        },
+    });
+
+    /* -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                                       PIPERRIGHTUP  
+          -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
+
+    Q.Sprite.extend("PiperRightUp", {
+        init: function(p) {
+            this._super(p, {
+                sheet: "tiles",
+                sprite: "piper",
+                frame: 17
+            });
+
+            this.add('2d');
+        },
+    });
+
+
+    /* -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                                    PIPERLEFTFDOWN
+       -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
+
+    Q.Sprite.extend("PiperLeftDown", {
+        init: function(p) {
+            this._super(p, {
+                sheet: "tiles",
+                sprite: "piper",
+                frame: 10
+            });
+
+            this.add('2d');
+
+        },
+    });
+
+    /* -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+                                                       PIPERRIGHTDOWN
+          -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
+
+    Q.Sprite.extend("PiperRightDown", {
+        init: function(p) {
+            this._super(p, {
+                sheet: "tiles",
+                sprite: "piper",
+                frame: 48
+            });
+
+            this.add('2d');
+        },
+    });
+
 
 /* -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
                                                 LOAD
    -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
-    Q.load(["mario_small.png", "mario_small.json", "goomba.png", "goomba.json", "bloopa.png", "bloopa.json", "princess.png", "mainTitle.png", "coin.png", "coin.json", "tiles.png", "block.json"], function() {
+    Q.load(["mario_small.png", "mario_small.json", "goomba.png", "goomba.json", "bloopa.png", "bloopa.json", "princess.png", "mainTitle.png", "coin.png", "coin.json", "tiles.png", "block.json", "1up_mushroom.gif"], function() {
         Q.compileSheets("mario_small.png", "mario_small.json", "coin.png", "coin.json");
         Q.compileSheets("goomba.png", "goomba.json");
         Q.compileSheets("coin.png", "coin.json");
@@ -405,7 +516,7 @@ var game = function() {
             Q.stageScene("startGame");
         });
     });
-    Q.load(["coin.mp3", "coin.ogg", "music_die.mp3", "music_die.ogg", "music_level_complete.mp3", "music_level_complete.ogg", "music_main.mp3", "music_main.ogg", "jump_small.mp3", "jump_small.ogg", "kill_enemy.mp3", "kill_enemy.ogg"]);
+    Q.load(["coin.mp3", "coin.ogg", "music_die.mp3", "music_die.ogg", "music_level_complete.mp3", "music_level_complete.ogg", "music_main.mp3", "music_main.ogg", "jump_small.mp3", "jump_small.ogg", "kill_enemy.mp3", "kill_enemy.ogg", "1up.mp3", "1up.ogg", "item_rise.mp3", "item_rise.ogg"]);
 
 
 
