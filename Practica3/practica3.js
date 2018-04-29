@@ -426,7 +426,7 @@ var game = function() {
 
         this.on("bump.bottom", function(collision) {
             if (collision.obj.isA("Mario")) { //Este bloque no hace nada, se puede golpear pero no suelta nada
-                    Q.audio.play("hit_head.mp3")
+                    Q.audio.play("hit_head.mp3");
                     this.chain({ x: this.p.x, y: this.p.y - 15 }, .3, Q.Easing.Quadratic.Out, { delay: 0 });
                     this.chain({ x: this.p.x, y: this.p.y }, .3, Q.Easing.Quadratic.Out, { delay: 0 });
             }
