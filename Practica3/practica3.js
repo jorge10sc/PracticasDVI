@@ -426,7 +426,7 @@ var game = function() {
 
         this.on("bump.bottom", function(collision) {
             if (collision.obj.isA("Mario")) { //Este bloque no hace nada, se puede golpear pero no suelta nada
-                    Q.audio.play("hit_head.mp3");
+                    Q.audio.play("hit_head.mp3")
                     this.chain({ x: this.p.x, y: this.p.y - 15 }, .3, Q.Easing.Quadratic.Out, { delay: 0 });
                     this.chain({ x: this.p.x, y: this.p.y }, .3, Q.Easing.Quadratic.Out, { delay: 0 });
             }
@@ -460,7 +460,7 @@ var game = function() {
                         this.chain({ x: this.p.x, y: this.p.y }, .3, Q.Easing.Quadratic.Out, { delay: 0 });
                         Q.audio.play("coin.mp3");
                         var moneduca = this.stage.insert(new Q.Coin({ x: this.p.x, y: this.p.y - 35 }));
-                        moneduca.chain({ x: this.p.x, y: this.p.y - 50 }, .3, Q.Easing.Quadratic.Out, { delay: 0.2, callback: this.dissapear });
+                        moneduca.chain({ x: this.p.x, y: this.p.y - 50 }, .3, Q.Easing.Quadratic.Out, { delay: 0.2, callback: moneduca.dissapear });
                         this.play("used");
 
                     }
