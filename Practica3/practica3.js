@@ -38,7 +38,8 @@ var game = function() {
     });
 
     Q.animations("block", {
-        rotate: { frames: [23, 30, 37], rate: 1/6, loop:true}
+        rotate: { frames: [23, 30, 37], rate: 1/6, loop:true},
+        used: {frames: [24], rate: 1, loop:true}
     });
 
     Q.animations("bloopa", {
@@ -64,12 +65,11 @@ var game = function() {
         var coin2 = stage.insert(new Q.Coin({ x: 730, y: 420 }));
         var coin3 = stage.insert(new Q.Coin({ x: 760, y: 420 }));
         var bloque1 = stage.insert(new Q.Block({ x: 1410, y: 380}));
-        var seta = stage.insert(new Q.Mushroom1up({ x: 1410, y: 360}));
-        //Tuberia:
-        var piperIz = stage.insert(new Q.PiperLeftUp({ x: 585, y: 480 }));
-        var piperDr = stage.insert(new Q.PiperRightUp({ x: 600, y: 480 }));
-        var piperIzBase = stage.insert(new Q.PiperLeftDown({ x: 585, y: 500 }));
-        var piperDrBase = stage.insert(new Q.PiperRightDown({ x: 600, y: 500 }));
+        var bloque2 = stage.insert(new Q.Block({ x: 500, y: 420}));
+        var piperIz = stage.insert(new Q.PiperLeftUp({ x: 1000, y: 480 }));
+        var piperDr = stage.insert(new Q.PiperRightUp({ x: 1015, y: 480 }));
+        var piperIzBase = stage.insert(new Q.PiperLeftDown({ x: 1000, y: 500 }));
+        var piperDrBase = stage.insert(new Q.PiperRightDown({ x: 1015, y: 500 }));
 
         stage.add("viewport").follow(mario,{ x: true, y: false });
         stage.centerOn(150,380);
@@ -169,7 +169,8 @@ var game = function() {
                 y: 380,
                 inix: 150,
                 iniy: 380,
-                gravity: 0.5
+                gravity: 0.5,
+                salto: false
             });
             this.add('2d, platformerControls, animation');
             //this.on("deadM", this, "die");
@@ -178,12 +179,14 @@ var game = function() {
                 if(collision.obj.isA("Goomba")) {
                     collision.obj.die();
                     this.p.vy = -200;
+                    this.p.salto = true;
 
                 }
                 else if (collision.obj.isA("Bloopa")) {
                     collision.obj.p.gravity = 1;
                     collision.obj.die();
                     this.p.vy = -300;
+                    this.p.salto = true;
                 }
                 
             });
@@ -206,6 +209,10 @@ var game = function() {
         },
         step: function(dt) {
             if(this.p.vy < 0){ //Está saltando
+                if(!this.p.salto) {
+                    Q.audio.play("jump_small.mp3");
+                    this.p.salto=true;
+                }
                 if(this.p.vx > 0) {
                     this.play("jump_right");
                 } else if(this.p.vx < 0) {
@@ -213,6 +220,7 @@ var game = function() {
                 }
             }
             else {
+                this.p.salto = false;
                 if(this.p.vx > 0) {
                     this.play("run_right");
                 } else if(this.p.vx < 0) {
@@ -354,30 +362,35 @@ var game = function() {
                                                 BLOCK
    -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
    Q.Sprite.extend("Block", {
-    init: function(p){
+    init: function(p) {
         this._super(p, {
             sheet: "tiles",
             sprite: "block",
             frame: 0,
-            gravity: 0
+            gravity: 0,
+            usado: false
         });
 
         this.on("bump.bottom", function(collision) {
-            if(collision.obj.isA("Mario")) {
-                this.chain( {x: this.p.x, y: this.p.y-15}, .3, Q.Easing.Quadratic.Out, {delay: 0});
-                this.chain( {x: this.p.x, y: this.p.y}, .3, Q.Easing.Quadratic.Out, {delay: 0});
-                Q.audio.play("item_rise.mp3");
-                var seta = Q.insert(new Q.Mushroom1up({ x: 1410, y: 360}));
+            if (collision.obj.isA("Mario")) {
+                if (!this.p.usado) {
+                    this.p.usado = true;
+                    this.play("used");
+                    this.chain({ x: this.p.x, y: this.p.y - 15 }, .3, Q.Easing.Quadratic.Out, { delay: 0 });
+                    this.chain({ x: this.p.x, y: this.p.y }, .3, Q.Easing.Quadratic.Out, { delay: 0 });
+                    Q.audio.play("item_rise.mp3");
+                    this.stage.insert(new Q.Mushroom1up({ x: this.p.x, y: this.p.y-20 }));
+                }
             }
         });
 
         this.add('2d, animation, tween');
-   
+
         this.play("rotate");
-    },    
+    },
 
     dissapear: function() {
-        Q.state.inc("score",1);
+        Q.state.inc("score", 1);
         this.destroy();
     }
 });
@@ -408,32 +421,32 @@ var game = function() {
                                                1UP MUSHROOM
    -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+*/
    Q.Sprite.extend("Mushroom1up", {
-    init: function(p){
+    init: function(p) {
         this._super(p, {
             asset: "1up_mushroom.gif",
             velocidad: 80,
             x: 1410,
             y: 360
-            
+
         });
-       
+
         this.add('2d, aiBounce, animation');
         this.on("bump.left,bump.right,bump.bottom,bump.top", function(collision) {
-            if(collision.obj.isA("Mario")) {
+            if (collision.obj.isA("Mario")) {
                 Q.audio.play("1up.mp3");
                 Q.state.inc("lifes", 1);
                 this.destroy();
             }
         });
         this.on("bump.left,bump.right", function(collision) {
-            if(!collision.obj.isA("Mario")) {
+            if (!collision.obj.isA("Mario")) {
                 this.p.velocidad = -1 * this.p.velocidad;
             }
         });
     },
-    step: function (dt) {
-        this.p.x += this.p.velocidad*dt;
-    },  
+    step: function(dt) {
+        this.p.x += this.p.velocidad * dt;
+    },
 });
 
 /* -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
